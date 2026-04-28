@@ -7,11 +7,10 @@
 # 4. Executa o comando de inicialização do banco de dados.
 # 5. Inicia o servidor Gunicorn.
 
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_PORT = '5432'
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+export DB_HOST="tech-challenge-3dclt-db.cczwjea6pw1h.us-east-1.rds.amazonaws.com"
+export DB_NAME="postgres"
+export DB_PORT="5432"
+export DB_USER="postgres"
 
 # Verifique se as variáveis de ambiente do banco de dados estão definidas
 if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ]; then
