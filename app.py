@@ -23,7 +23,16 @@ def load_db_credentials_from_secret():
     try:
         response = client.get_secret_value(SecretId=SECRET_NAME)
     except ClientError as e:
-        raise RuntimeError(f"Erro ao buscar secret {SECRET_NAME} no Secrets Manager: {e}")
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            print("The requested secret " + SECRET_NAME + " was not found")
+        elif e.response['Error']['Code'] == 'InvalidRequestException':
+            print("The request was invalid due to:", e)
+        elif e.response['Error']['Code'] == 'InvalidParameterException':
+            print("The request had invalid params:", e)
+        elif e.response['Error']['Code'] == 'DecryptionFailure':
+            print("The requested secret can't be decrypted using the provided KMS key:", e)
+        elif e.response['Error']['Code'] == 'InternalServiceError':
+            print("An error occurred on service side:", e)
 
     # SecretString (texto)
     secret_string = response.get("SecretString")
