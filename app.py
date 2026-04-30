@@ -1,11 +1,11 @@
 import os
+import json
 import click
+import boto3
+from botocore.exceptions import ClientError
 from flask import Flask, request, jsonify
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import json
-import boto3
-from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 
