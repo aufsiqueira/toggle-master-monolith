@@ -10,8 +10,8 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 
 # Nome/ARN do secret e região
-SECRET_NAME = os.getenv("techchallenge/3DCLT/app/togglemaster")
-REGION_NAME = os.getenv("AWS_REGION", "us-east-1")
+SECRET_NAME = "techchallenge/3DCLT/app/togglemaster"
+REGION_NAME = "us-east-1"
 
 def load_db_credentials_from_secret():
     if not SECRET_NAME:
