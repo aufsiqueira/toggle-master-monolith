@@ -3,20 +3,68 @@ import click
 from flask import Flask, request, jsonify
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import json
+import boto3
+from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+# Nome/ARN do secret e região
+SECRET_NAME = os.getenv("techchallenge/3DCLT/app/togglemaster")
+REGION_NAME = os.getenv("AWS_REGION", "us-east-1")
+
+def load_db_credentials_from_secret():
+    if not SECRET_NAME:
+        raise RuntimeError("DB_SECRET_NAME não definido nas variáveis de ambiente")
+
+    session = boto3.session.Session()
+    client = session.client(service_name="secretsmanager", region_name=REGION_NAME)
+
+    try:
+        response = client.get_secret_value(SecretId=SECRET_NAME)
+    except ClientError as e:
+        raise RuntimeError(f"Erro ao buscar secret {SECRET_NAME} no Secrets Manager: {e}")
+
+    # SecretString (texto)
+    secret_string = response.get("SecretString")
+    if not secret_string:
+        raise RuntimeError(f"Secret {SECRET_NAME} não contém campo SecretString")
+
+    secret_dict = json.loads(secret_string)
+
+    return {
+        "host": secret_dict["host"],
+        "dbname": secret_dict.get("dbname", "postgres"),
+        "user": secret_dict["username"],
+        "password": secret_dict["password"],
+        "port": secret_dict.get("port", 5432),
+    }
+
+# Tenta carregar do Secrets Manager; se falhar, cai para env vars
+try:
+    creds = load_db_credentials_from_secret()
+    DB_HOST = creds["host"]
+    DB_NAME = creds["dbname"]
+    DB_USER = creds["user"]
+    DB_PASSWORD = creds["password"]
+    DB_PORT = creds["port"]
+except Exception as e:
+    print(f"Não foi possível carregar credenciais do Secrets Manager, usando env vars. Detalhes: {e}")
+    
+    DB_HOST = os.getenv("DB_HOST")
+    DB_NAME = os.getenv("DB_NAME", "postgres")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_PORT = int(os.getenv("DB_PORT", "5432"))
+
 
 def get_db_connection():
     conn = psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
         user=DB_USER,
-        password=DB_PASSWORD
+        password=DB_PASSWORD,
+        port=DB_PORT,
     )
     return conn
 
